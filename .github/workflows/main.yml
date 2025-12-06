@@ -1,0 +1,40 @@
+name: Test backend for now
+
+on:
+  push:
+    branches:
+      - main
+      - mikhail
+
+jobs:
+  tests_backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: trial_user
+          POSTGRES_PASSWORD: trial_password
+          POSTGRES_DB: trial
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: 3.9
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8==6.0.0 flake8-isort==6.0.0
+        pip install -r ./backend/requirements.txt
+    - name: Test with flake8 and django
+      env:
+        POSTGRES_USER: kittygram_user
+        POSTGRES_PASSWORD: kittygram_password
+        POSTGRES_DB: kittygram
+        DB_HOST: 127.0.0.1
+        DB_PORT: 5432
+      run: |
+        python -m flake8 backend/
