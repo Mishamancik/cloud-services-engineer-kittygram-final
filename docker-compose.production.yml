@@ -1,10 +1,10 @@
 services:
-  gateway:
+  gateway_service:
     image: mishamancik/kittygram_gateway:latest
     container_name: gateway
     depends_on:
-      - backend
-      - frontend
+      - backend_service
+      - frontend_service
     ports:
       - "80:80"
     volumes:
@@ -12,18 +12,18 @@ services:
       - media:/code/media
     restart: unless-stopped
 
-  frontend:
+  frontend_service:
     image: mishamancik/kittygram_frontend:latest
     container_name: frontend
     volumes:
       - static:/code/static
     restart: unless-stopped
 
-  backend:
+  backend_service:
     image: mishamancik/kittygram_backend:latest
     container_name: backend
     depends_on:
-      - postgres
+      - postgres_service
     env_file: 
       - .env
     ports:
@@ -32,13 +32,8 @@ services:
       - media:/code/media
       - static:/code/static
     restart: unless-stopped
-    command: >
-      sh -c "
-      python manage.py migrate &&
-      python manage.py runserver 0.0.0.0:8000
-      "
 
-  postgres:
+  postgres_service:
     container_name: postgres
     image: postgres:13
     env_file: 
