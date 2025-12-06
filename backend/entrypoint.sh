@@ -4,4 +4,4 @@ echo "Running migrations from script..."
 python manage.py migrate
 
 echo "Starting server from scrypt..."
-python manage.py runserver
+python manage.py runserver 0.0.0.0:8000
