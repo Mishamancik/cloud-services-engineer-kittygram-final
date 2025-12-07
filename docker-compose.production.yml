@@ -1,0 +1,48 @@
+services:
+  gateway_service:
+    image: mishamancik/kittygram_gateway:latest
+    container_name: gateway
+    depends_on:
+      - backend_service
+      - frontend_service
+    ports:
+      - "80:80"
+    volumes:
+      - static:/code/static
+      - media:/code/media
+    restart: unless-stopped
+
+  frontend_service:
+    image: mishamancik/kittygram_frontend:latest
+    container_name: frontend
+    volumes:
+      - static:/app/static
+    restart: unless-stopped
+
+  backend_service:
+    image: mishamancik/kittygram_backend:latest
+    container_name: backend
+    depends_on:
+      - postgres_service
+    env_file: 
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - media:/code/media
+      - static:/code/static
+    restart: unless-stopped
+
+  postgres_service:
+    container_name: postgres
+    image: postgres:13
+    env_file: 
+      - .env
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  static:
+  media:
+  pg_data:
