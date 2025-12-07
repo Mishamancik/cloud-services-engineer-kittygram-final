@@ -1,4 +1,4 @@
-name: Test backend for now
+name: Main workflow
 
 on:
   push:
@@ -7,58 +7,107 @@ on:
       - mikhail
 
 jobs:
-  job1:
-    name: Run linter for backend
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
-      with:
-        python-version: 3.9
-    - name: Install linter
-      run: |
-        python -m pip install --upgrade pip
-        pip install flake8==6.0.0 flake8-isort==6.0.0
-    - name: Run static tests with flake8
-      run: |
-        python -m flake8 backend/
+  # job1:
+  #   name: Run linter for backend
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - uses: actions/checkout@v3
+  #   - uses: actions/setup-python@v4
+  #     with:
+  #       python-version: 3.9
+  #   - name: Install flake8
+  #     run: |
+  #       python -m pip install --upgrade pip
+  #       pip install flake8==6.0.0 flake8-isort==6.0.0
+  #   - name: Run static test with flake8
+  #     run: |
+  #       python -m flake8 backend/
 
-  job2:
-      name: Push images to DockerHub
-      runs-on: ubuntu-latest
-      needs: job1
-      steps:
-        - name: Check out the repo
-          uses: actions/checkout@v3
-        - name: Set up Docker Buildx
-          uses: docker/setup-buildx-action@v2
-        - name: Login to Docker 
-          uses: docker/login-action@v2
-          with:
-            username: ${{ secrets.DOCKER_USERNAME }}
-            password: ${{ secrets.DOCKER_PASSWORD }}
-        - name: Push frontend
-          uses: docker/build-push-action@v4
-          with:
-            context: ./frontend/
-            push: true
-            tags: ${{ secrets.DOCKER_USERNAME }}/kittygram_frontend:latest
-        - name: Push backend
-          uses: docker/build-push-action@v4
-          with:
-            context: ./backend/
-            push: true
-            tags: ${{ secrets.DOCKER_USERNAME }}/kittygram_backend:latest
-        - name: Push gateway
-          uses: docker/build-push-action@v4
-          with:
-            context: ./nginx/
-            push: true
-            tags: ${{ secrets.DOCKER_USERNAME }}/kittygram_gateway:latest
+  # job2:
+  #     name: Push images to Hub
+  #     runs-on: ubuntu-latest
+  #     needs: job1
+  #     steps:
+  #       - name: Check out the repo
+  #         uses: actions/checkout@v3
+  #       - name: Set up Docker Buildx
+  #         uses: docker/setup-buildx-action@v2
+  #       - name: Login to Docker 
+  #         uses: docker/login-action@v2
+  #         with:
+  #           username: ${{ secrets.DOCKER_USERNAME }}
+  #           password: ${{ secrets.DOCKER_PASSWORD }}
+  #       - name: Push frontend
+  #         uses: docker/build-push-action@v4
+  #         with:
+  #           context: ./frontend/
+  #           push: true
+  #           tags: ${{ secrets.DOCKER_USERNAME }}/kittygram_frontend:latest
+  #       - name: Push backend
+  #         uses: docker/build-push-action@v4
+  #         with:
+  #           context: ./backend/
+  #           push: true
+  #           tags: ${{ secrets.DOCKER_USERNAME }}/kittygram_backend:latest
+  #       - name: Push gateway
+  #         uses: docker/build-push-action@v4
+  #         with:
+  #           context: ./nginx/
+  #           push: true
+  #           tags: ${{ secrets.DOCKER_USERNAME }}/kittygram_gateway:latest
+
+  job3:
+    name: Deploy in YC
+    runs-on: ubuntu-latest
+    # needs:
+    #   - job2
+    steps:
+      - uses: actions/checkout@v3
+      - name: Move compose to YC
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.YC_HOST }}
+          username: ${{ secrets.YC_USER }}
+          key: ${{ secrets.YC_SSH_KEY }}
+          passphrase: ${{ secrets.YC_SSH_PASSPHRASE }}
+          source: "docker-compose.production.yml"
+          target: "kittygram"
+      - name: Deploy in YC
+        uses: appleboy/ssh-action@master
+        with:
+           host: ${{ secrets.YC_HOST }}
+           username: ${{ secrets.YC_USER }}
+           key: ${{ secrets.YC_SSH_KEY }}
+           passphrase: ${{ secrets.YC_SSH_PASSPHRASE }}
+           script: |
+              cd kittygram
+              
+              cat > .env <<EOF
+              POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+              POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+              POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+              POSTGRES_HOST=${{ secrets.POSTGRES_HOST }}
+              POSTGRES_PORT=${{ secrets.POSTGRES_PORT }}
+              EOF
+
+              sudo docker compose -f docker-compose.production.yml pull
+              sudo docker compose -f docker-compose.production.yml down
+              sudo docker compose -f docker-compose.production.yml up -d --remove-orphans
+              
+              sudo docker compose -f docker-compose.production.yml exec backend_service python manage.py migrate
+              sudo docker compose -f docker-compose.production.yml exec backend_service python manage.py collectstatic
+              sudo docker compose -f docker-compose.production.yml exec backend_service mkdir -p /code/static/backend/
+              sudo docker compose -f docker-compose.production.yml exec backend_service cp -r /code/collected_static/. /code/static/backend/
+              
+              sudo docker compose -f docker-compose.production.yml exec frontend_service mkdir -p /app/static/frontend/
+              sudo docker compose -f docker-compose.production.yml exec frontend_service cp -r /app/build/. /app/static/frontend/
+
+
 
 # this test will run properly when i specify params in tests.yml and have a remote host
-  # automatic_test:
+  # job4:
   #   runs-on: ubuntu-latest
+  #   needs: job3
   #   services:
   #     postgres:
   #       image: postgres:13
@@ -90,3 +139,14 @@ jobs:
   #       DB_PORT: 5432
   #     run: |
   #       pytest tests/
+
+  # job5:
+  #   runs-on: ubuntu-latest
+  #   needs: job3
+  #   steps:
+  #   - name: Send message
+  #     uses: appleboy/telegram-action@master
+  #     with:
+  #       to: ${{ secrets.TELEGRAM_TO }}
+  #       token: ${{ secrets.TELEGRAM_TOKEN }}
+  #       message: Деплой успешно выполнен!

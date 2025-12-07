@@ -16,7 +16,7 @@ services:
     image: mishamancik/kittygram_frontend:latest
     container_name: frontend
     volumes:
-      - static:/code/static
+      - static:/app/static
     restart: unless-stopped
 
   backend_service:
