@@ -1,3 +1,9 @@
 
 .DS_Store
 .env
+
+infra/terraform.tfvars
+infra/.terraform*
+infra/authorized_key.json
+
+temporary_local_files/*
