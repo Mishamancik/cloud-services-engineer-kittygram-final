@@ -22,16 +22,19 @@ resource "yandex_compute_instance" "vm_1" {
   }
 
   network_interface {
-    subnet_id            = yandex_vpc_subnet.kittygram_network_subnet[0].id
+    subnet_id            = yandex_vpc_subnet.kittygram_subnet[0].id
     nat                  = var.nat
     security_group_ids   = [yandex_vpc_security_group.kittygram_sg.id]
   }
 
   metadata = {
-    serial-port-enable = "1"
+    serial-port-enable = 1
+    enable-os-login = true
     user-data = templatefile("${path.module}/init/vm-install.yml", 
     {
+      USER = var.vm_user
       SSH_KEY = var.ssh_key
     })
+    ssh-keys = "ubuntu:ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFDKwKJSkXu8aj8ffNnFIMaomkP03pBbolBfu/YVlKs6"
   }
 }

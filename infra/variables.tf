@@ -37,13 +37,11 @@ variable "vm_1_zone" {
   default = "ru_central1-a"
 }
 
-# TODO: проверить название ОС
 variable "os_image_family" {
   type = string
-  default = "ubuntu-2204-lts"
+  default = "ubuntu-2404-lts"
 }
 
-# TODO: проверить тип cpu
 variable "platform_id" {
   type = string
   default = "standard-v1"
@@ -72,6 +70,11 @@ variable "disk_size" {
 variable "nat" {
   type = string
   default = "true"
+}
+
+variable "vm_user" {
+  type    = string
+  default = "ubuntu"
 }
 
 variable "ssh_key" {
