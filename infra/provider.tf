@@ -19,8 +19,8 @@ terraform {
     skip_requesting_account_id  = true
     skip_s3_checksum            = true
 
-    dynamodb_endpoint = "https://docapi.serverless.yandexcloud.net/ru-central1/b1gn0dch107j3ko8njsj/etn377d9gihnlfa4sdcn"
-    dynamodb_table    = "lock"
+    # dynamodb_endpoint = "https://docapi.serverless.yandexcloud.net/ru-central1/b1gn0dch107j3ko8njsj/etn377d9gihnlfa4sdcn"
+    # dynamodb_table    = "lock"
   }
 }
 
