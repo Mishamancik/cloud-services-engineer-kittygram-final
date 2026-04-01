@@ -1,0 +1,21 @@
+name: Main workflow
+
+on:
+  push:
+    branches:
+      - main
+      - sem-2
+
+jobs:
+  job1:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Save tfvars to artifact
+        run: echo "${{ secrets.TF_VARS }}" > terraform.tfvars
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfvars
+          path: terraform.tfvars
