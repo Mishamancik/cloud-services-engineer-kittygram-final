@@ -101,6 +101,8 @@ jobs:
       - job3
     steps:
       - uses: actions/checkout@v3
+      - name: Debug VM IP
+        run: echo "VM IP = '${{ needs.job3.outputs.external_ip }}'"
       - name: Copy compose to YC
         uses: appleboy/scp-action@master
         with:
