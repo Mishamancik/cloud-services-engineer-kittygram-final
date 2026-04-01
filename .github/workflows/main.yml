@@ -87,7 +87,8 @@ jobs:
           - name: Terraform Output
             working-directory: ./infra
             run: |
-              echo "ip=$(terraform output -raw external_ip)" >> $GITHUB_OUTPUT
+              ip=$(terraform output -raw external_ip | tr -d '\r\n')
+              echo "ip=$ip" >> $GITHUB_OUTPUT
             env:
               AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
               AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
