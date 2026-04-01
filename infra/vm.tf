@@ -36,6 +36,6 @@ resource "yandex_compute_instance" "vm_1" {
       USER = var.vm_user
       SSH_KEY = var.ssh_key
     })
-    ssh-keys = "ubuntu:ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFDKwKJSkXu8aj8ffNnFIMaomkP03pBbolBfu/YVlKs6"
+    ssh-keys = "cicd:ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFDKwKJSkXu8aj8ffNnFIMaomkP03pBbolBfu/YVlKs6"
   }
 }

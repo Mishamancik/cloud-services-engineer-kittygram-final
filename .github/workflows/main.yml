@@ -96,7 +96,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - job2
-      - job3
+      # - job3
     steps:
       - uses: actions/checkout@v3
       - name: Copy compose to YC
