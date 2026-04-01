@@ -24,6 +24,7 @@ resource "yandex_compute_instance" "vm_1" {
   network_interface {
     subnet_id            = yandex_vpc_subnet.kittygram_subnet[0].id
     nat                  = var.nat
+    nat_ip_address       = yandex_vpc_address.addr.external_ipv4_address[0].address
     security_group_ids   = [yandex_vpc_security_group.kittygram_sg.id]
   }
 
