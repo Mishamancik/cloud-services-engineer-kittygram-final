@@ -28,7 +28,7 @@ jobs:
       runs-on: ubuntu-latest
       needs: job1
       steps:
-        - name: Check out the repo
+        - name: Checkout repo
           uses: actions/checkout@v3
         - name: Set up Docker Buildx
           uses: docker/setup-buildx-action@v2
@@ -57,10 +57,54 @@ jobs:
             tags: ${{ secrets.DOCKER_USERNAME }}/kittygram_gateway:latest
 
   job3:
+        name: Create infrastructure in YC
+        runs-on: ubuntu-latest
+        needs: job1
+        # outputs:
+        #   external_ip: ${{ steps.get_ip.outputs.ip }}
+        steps:
+          - name: Checkout repo
+            uses: actions/checkout@v3
+          - name: Setup Terraform
+            uses: hashicorp/setup-terraform@v2
+            with:
+              terraform_version: 1.14.8
+          - name: Prepare Secrets
+            working-directory: ./infra
+            run: |
+              echo '${{ secrets.AUTHORIZED_KEY_JSON }}' > ./authorized_key.json
+              echo '${{ secrets.TERRAFORM_TFVARS }}' > ./terraform.tfvars
+
+          - name: Terraform Init
+            working-directory: ./infra
+            run: terraform init
+            env:
+              AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+              AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+          - name: Terraform Plan
+            working-directory: ./infra
+            run: terraform plan
+            env:
+              AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+              AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          # - name: Terraform Apply
+          #   working-directory: ./infra
+          #   run: terraform apply -auto-approve
+          #   env:
+          #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          # - name: Get external IP
+          #   id: get_ip
+          #   run: |
+          #     echo "ip=$(terraform output -raw external_ip)" >> $GITHUB_OUTPUT
+
+  job4:
     name: Deploy in YC
     runs-on: ubuntu-latest
     needs:
       - job2
+      - job3
     steps:
       - uses: actions/checkout@v3
       - name: Copy compose to YC
@@ -103,10 +147,10 @@ jobs:
               sudo docker compose -f docker-compose.production.yml exec frontend_service mkdir -p /app/static/frontend/
               sudo docker compose -f docker-compose.production.yml exec frontend_service cp -r /app/build/. /app/static/frontend/
 
-  job4:
+  job5:
     name: Run autotests
     runs-on: ubuntu-latest
-    needs: job3
+    needs: job4
     services:
       postgres:
         image: postgres:13
@@ -136,10 +180,10 @@ jobs:
       run: |
         pytest tests/
 
-  job5:
+  job6:
     runs-on: ubuntu-latest
     name: Notify in Telegram
-    needs: job4
+    needs: job5
     steps:
     - name: Send message
       uses: appleboy/telegram-action@master
