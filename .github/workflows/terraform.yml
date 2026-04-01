@@ -12,7 +12,7 @@ on:
           - plan
           - apply
           - destroy
-          - output
+          # - output
 
 jobs:
   terraform:
@@ -67,7 +67,7 @@ jobs:
         working-directory: ./infra
         run: terraform destroy -auto-approve
 
-      - name: Terraform Output
-        if: ${{ github.event.inputs.action == 'output' }}
-        working-directory: ./infra
-        run: terraform output external_ip
+      # - name: Terraform Output
+      #   if: ${{ github.event.inputs.action == 'output' }}
+      #   working-directory: ./infra
+      #   run: terraform output external_ip
