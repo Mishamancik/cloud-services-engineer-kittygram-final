@@ -60,6 +60,9 @@ jobs:
         name: Get IP from YC
         runs-on: ubuntu-latest
         needs: job1
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         outputs:
           external_ip: ${{ steps.get_ip.outputs.ip }}
         steps:
@@ -81,18 +84,12 @@ jobs:
           - name: Terraform Init
             working-directory: ./infra
             run: terraform init -backend-config="access_key=$AWS_ACCESS_KEY_ID" -backend-config="secret_key=$AWS_SECRET_ACCESS_KEY" -lock-timeout=15m
-            env:
-              AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-              AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           - name: Terraform Output
             id: get_ip
             working-directory: ./infra
             run: |
               ip=$(terraform output -raw external_ip | tr -d '\r\n')
               echo "ip=$ip" >> $GITHUB_OUTPUT
-            env:
-              AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-              AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   job4:
     name: Deploy in YC
