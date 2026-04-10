@@ -19,6 +19,7 @@ terraform {
     skip_requesting_account_id  = true
     skip_s3_checksum            = true
 
+    # Terraform State Lock, чтобы избежать одновременного изменения состояния несколькими пользователями
     dynamodb_endpoint = "https://docapi.serverless.yandexcloud.net/ru-central1/b1gn0dch107j3ko8njsj/etnlclbq80chp5vm0ed9"
     dynamodb_table    = "state-lock"
   }
@@ -26,7 +27,7 @@ terraform {
 
 provider "yandex" {
   service_account_key_file = "authorized_key.json"
-  cloud_id  = "b1gn0dch107j3ko8njsj"
-  folder_id = "b1gvvb7bdukh1f2dlkab"
-  zone      = "ru-central1-a"
+  cloud_id  = var.cloud_id
+  folder_id = var.folder_id
+  zone      = var.yc_zone
 }

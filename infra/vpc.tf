@@ -32,9 +32,9 @@ resource "yandex_vpc_security_group" "kittygram_sg" {
 	}
 }
 
-resource "yandex_vpc_address" "addr" {
-  name = "my-static-ip"
+resource "yandex_vpc_address" "kittygram_ip" {
+  name = "kittygram-ip"
   external_ipv4_address {
-    zone_id = "ru-central1-a"
+    zone_id = var.vm_zone
   }
 }

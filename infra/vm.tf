@@ -2,14 +2,15 @@ data "yandex_compute_image" "ubuntu_lts" {
   family = var.os_image_family
 } 
 
-resource "yandex_compute_instance" "vm_1" {
-  name     = var.vm_1_name
-  hostname = var.vm_1_name
-  zone     = var.vm_1_zone
+resource "yandex_compute_instance" "vm" {
+  name     = var.vm_name
+  hostname = var.vm_name
+  zone     = var.vm_zone
   platform_id = var.platform_id
 
   resources {
     cores  = var.cores
+    core_fraction = var.core_fraction
     memory = var.memory
   }
 
@@ -24,7 +25,7 @@ resource "yandex_compute_instance" "vm_1" {
   network_interface {
     subnet_id            = yandex_vpc_subnet.kittygram_subnet[0].id
     nat                  = var.nat
-    nat_ip_address       = yandex_vpc_address.addr.external_ipv4_address[0].address
+    nat_ip_address       = yandex_vpc_address.kittygram_ip.external_ipv4_address[0].address
     security_group_ids   = [yandex_vpc_security_group.kittygram_sg.id]
   }
 
@@ -36,6 +37,6 @@ resource "yandex_compute_instance" "vm_1" {
       USER = var.vm_user
       SSH_KEY = var.ssh_key
     })
-    ssh-keys = "cicd:ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFDKwKJSkXu8aj8ffNnFIMaomkP03pBbolBfu/YVlKs6"
+    ssh-keys = "${var.vm_user}:${var.ssh_key}" # Специальный формат для Cloud-init в YC
   }
 }

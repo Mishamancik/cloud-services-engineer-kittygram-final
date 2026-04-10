@@ -1,38 +1,45 @@
 variable "yc_region" {
   description = "Yandex Cloud region name"
   type = string
+  default = "ru-central1"
+}
+
+variable "yc_zone" {
+  description = "Yandex Cloud zone name"
+  type = string
+  default = "ru-central1-a"
 }
 
 variable "cloud_id" {
-  description = "Cloud ID"
+  description = "Yandex Cloud cloud ID"
   type = string
 }
 
 variable "folder_id" {
-  description = "Folder ID"
+  description = "Yandex Cloud folder ID"
   type = string
 }
 
 variable "vpc_name" {
-  type        = string
-  description = "Название VPC сети"
+  description = "Name of the VPC network"
+  type = string
 }
 
 variable "net_cidr" {
-  description = "Список подсетей"
+  description = "Subnets and their CIDR blocks"
   type = list(object({
-    name   = string
-    zone   = string
+    name = string
+    zone = string
     prefix = string
   }))
 }
 
-variable "vm_1_name" {
+variable "vm_name" {
   type = string
   default = "vm-kittygram"
 }
 
-variable "vm_1_zone" {
+variable "vm_zone" {
   type = string
   default = "ru_central1-a"
 }
@@ -43,6 +50,7 @@ variable "os_image_family" {
 }
 
 variable "platform_id" {
+  description = "Defines CPU type"
   type = string
   default = "standard-v1"
 }
@@ -50,6 +58,12 @@ variable "platform_id" {
 variable "cores" {
   type = number
   default = 2
+}
+
+variable "core_fraction" {
+  description = "Using a fraction of CPU is cheaper"
+  type = number
+  default = 20
 }
 
 variable "memory" {
@@ -73,7 +87,7 @@ variable "nat" {
 }
 
 variable "vm_user" {
-  type    = string
+  type = string
   default = "ubuntu"
 }
 
