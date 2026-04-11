@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - mikhail
+  workflow_dispatch:
 
 jobs:
   job1:
@@ -28,7 +28,7 @@ jobs:
       runs-on: ubuntu-latest
       needs: job1
       steps:
-        - name: Check out the repo
+        - name: Checkout repo
           uses: actions/checkout@v3
         - name: Set up Docker Buildx
           uses: docker/setup-buildx-action@v2
@@ -57,28 +57,69 @@ jobs:
             tags: ${{ secrets.DOCKER_USERNAME }}/kittygram_gateway:latest
 
   job3:
+        name: Get IP from YC
+        runs-on: ubuntu-latest
+        needs: job1
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        outputs:
+          external_ip: ${{ steps.get_ip.outputs.ip }}
+        steps:
+          - name: Checkout repo
+            uses: actions/checkout@v3
+          - name: Setup Terraform
+            uses: hashicorp/setup-terraform@v2
+            with:
+              terraform_version: 1.14.8
+              terraform_wrapper: false # Важно, чтобы вывод IP был чистым
+          - name: Prepare Secrets
+            working-directory: ./infra
+            run: |
+              cat <<'EOF' > ./authorized_key.json
+              ${{ secrets.AUTHORIZED_KEY_JSON }}
+              EOF
+              cat <<'EOF' > ./terraform.tfvars
+              ${{ secrets.TERRAFORM_TFVARS }}
+              EOF
+          - name: Terraform Init
+            working-directory: ./infra
+            run: terraform init -backend-config="access_key=$AWS_ACCESS_KEY_ID" -backend-config="secret_key=$AWS_SECRET_ACCESS_KEY" -lock-timeout=15m
+          - name: Terraform Output
+            id: get_ip
+            working-directory: ./infra
+            run: |
+              ip=$(terraform output -raw external_ip)
+              echo "ip=$ip" >> $GITHUB_OUTPUT
+
+  job4:
     name: Deploy in YC
     runs-on: ubuntu-latest
     needs:
       - job2
+      - job3
     steps:
       - uses: actions/checkout@v3
+      - name: Check that IP is not empty
+        run: |
+          if [ -z "${{ needs.job3.outputs.external_ip }}" ]; then
+            echo "IP is empty!"
+            exit 1
+          fi
       - name: Copy compose to YC
         uses: appleboy/scp-action@master
         with:
-          host: ${{ secrets.YC_HOST }}
-          username: ${{ secrets.YC_USER }}
-          key: ${{ secrets.YC_SSH_KEY }}
-          passphrase: ${{ secrets.YC_SSH_PASSPHRASE }}
+          host: ${{ needs.job3.outputs.external_ip }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
           source: "docker-compose.production.yml"
           target: "kittygram"
       - name: Deploy in YC
         uses: appleboy/ssh-action@master
         with:
-           host: ${{ secrets.YC_HOST }}
-           username: ${{ secrets.YC_USER }}
-           key: ${{ secrets.YC_SSH_KEY }}
-           passphrase: ${{ secrets.YC_SSH_PASSPHRASE }}
+           host: ${{ needs.job3.outputs.external_ip }}
+           username: ${{ secrets.VM_USER }}
+           key: ${{ secrets.VM_SSH_KEY }}
            script: |
               cd kittygram
               
@@ -104,10 +145,10 @@ jobs:
               sudo docker compose -f docker-compose.production.yml exec frontend_service mkdir -p /app/static/frontend/
               sudo docker compose -f docker-compose.production.yml exec frontend_service cp -r /app/build/. /app/static/frontend/
 
-  job4:
+  job5:
     name: Run autotests
     runs-on: ubuntu-latest
-    needs: job3
+    needs: job4
     services:
       postgres:
         image: postgres:13
@@ -137,10 +178,10 @@ jobs:
       run: |
         pytest tests/
 
-  job5:
+  job6:
     runs-on: ubuntu-latest
     name: Notify in Telegram
-    needs: job4
+    needs: job5
     steps:
     - name: Send message
       uses: appleboy/telegram-action@master
