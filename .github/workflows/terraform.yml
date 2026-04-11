@@ -49,7 +49,7 @@ jobs:
       - name: Terraform Plan
         if: ${{ github.event.inputs.action == 'plan' }}
         working-directory: ./infra
-        run: terraform plan lock-timeout=15m -no-color | tee result.txt
+        run: terraform plan -lock-timeout=15m -no-color | tee result.txt
 
       - name: Terraform Apply
         if: ${{ github.event.inputs.action == 'apply' }}

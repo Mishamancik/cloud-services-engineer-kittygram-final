@@ -192,6 +192,6 @@ jobs:
           Деплой успешно выполнен!
           
           Автор: ${{ github.actor }}
-          Коммит: ${{ github.event.commits[0].message }}
+          Коммит: ${{ github.event.head_commit.message }}
           Ссылка на коммит:
           https://github.com/${{ github.repository }}/commit/${{ github.sha }}
