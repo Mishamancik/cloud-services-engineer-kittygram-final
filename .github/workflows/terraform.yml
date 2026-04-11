@@ -27,6 +27,7 @@ jobs:
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.14.8
+          terraform_wrapper: false # Важно, чтобы вывод следующих команд был чистым
       - name: Prepare secrets
         working-directory: ./infra
         run: |
