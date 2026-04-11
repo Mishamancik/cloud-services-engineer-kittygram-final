@@ -42,6 +42,9 @@ jobs:
           terraform init -reconfigure -lock-timeout=15m \
             -backend-config="access_key=$AWS_ACCESS_KEY_ID" \
             -backend-config="secret_key=$AWS_SECRET_ACCESS_KEY"
+      - name: Terraform Validate
+        working-directory: ./infra
+        run: terraform validate
 
       - name: Terraform Plan
         if: ${{ github.event.inputs.action == 'plan' }}
@@ -63,7 +66,7 @@ jobs:
         working-directory: ./infra
         run: terraform show -no-color | tee result.txt
       
-      - name: Upload artifact
+      - name: Upload terraform artifact
         uses: actions/upload-artifact@v4
         with:
           name: terraform_${{ github.event.inputs.action }}_${{ github.run_id }}
